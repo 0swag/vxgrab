@@ -5,6 +5,7 @@ import json
 import sys
 from random import randint
 from time import sleep
+from rgbprint import Color
 
 
 
@@ -22,36 +23,40 @@ def findStuff(link):
             tlink = link
             tdir = main_path
             data = json.loads(links.get('phx-click'))
-            folder = data[0][1]['value']['value'].split('/')[-2].replace(' ', '_')
+            folder = data[0][1]['value']['value'].split('/')[-2]
             tdir+=f"/{folder}"
             tlink+=f"/{folder}"
-            print(tlink)
-            findStuff(tlink)
-            os.makedirs(f"{main_path}{tlink.split('https://vx-underground.org/Papers')[-1]}", exist_ok=True)
-            #os.chdir(tdir)
+            print(f"[{Color.yellow}*{Color.reset}] Found directory: {folder}")
+            os.system(f"mkdir -p {main_path}{tlink.split('https://vx-underground.org/Papers')[-1].replace('%20', '_').replace(' ', '_')}")            
+            print(f"[{Color.light_green}+{Color.reset}] Created directory: {Color.light_blue}{main_path}{tlink.split('https://vx-underground.org/Papers')[-1].replace('%20', '_')}{Color.reset}")
+            findStuff(tlink.replace(' ', '%20'))
+            os.chdir()
         except Exception as e:
             pass
     for file in soup.find_all('a'):
         href = file.get('href')
-        if href.endswith('.pdf'):
-            savedir = f"{main_path}{link.split('https://vx-underground.org/Papers')[-1]}"
+        if href.endswith('.pdf') or href.endswith('.PNG') or href.endswith('.png') or href.endswith('7z') or href.endswith('zip') or href.endswith('jpg') or href.endswith('jpeg') or href.endswith('.txt'):
+            savedir = f"{main_path}{link.split('https://vx-underground.org/Papers')[-1].replace('%20', '_')}"
             pdf_found+=1
             name = href.split('/')[-1]
-            print(f"[*] Found: {name}")
+            print(f"[{Color.yellow}*{Color.reset}] Found: {Color.light_blue}{name}{Color.reset}")
             resp = requests.get(href)
-            print(f"[*] Attempting to save in {savedir}/{name}")
+            print(f"[{Color.yellow}*{Color.reset}] Attempting to save in {Color.light_blue}{savedir}/{name}{Color.reset}")
             svdir = f"{savedir}/{name}/"
             #with open(f'{svdir}', 'wb') as fl:
             #fl.write(resp.content)
-            cmd = f"curl \"{href.replace(' ', '%20')}\" -o \"{savedir}/{name}\""
-            print(cmd)
-            os.system(f"mkdir -p {savedir}")
-            os.system(cmd)
-            print(f"[+] #{pdf_found} Added: {savedir}/{name} ")
-            sleep(randint(0,20))
+            treplace = r'/ '
+            if os.path.exists(f"{savedir}/{name}"):
+                print("File already exists")
+            else:
+                cmd = f"curl --silent \"{href.replace(' ', '%20')}\" -o \"{savedir}/{name}\""
+                os.system(f"mkdir -p {savedir.replace(' ', '_')}")
+                os.system(cmd)
+                print(f"[{Color.light_green}+{Color.reset}] {Color.light_green}#{pdf_found}{Color.reset} Added: {Color.light_blue}{savedir}/{name}{Color.reset}")
+                #sleep(3)
 
 if len(sys.argv) < 2:
-    print("[!] Incorrect usage:\n %s <link> <destination>" % sys.argv[0])
+    print(f"[{Color.red}!{Color.reset}] Incorrect usage:\n %s <link> <destination>" % sys.argv[0])
     sys.exit()
 link = sys.argv[1]
 main_path = sys.argv[2]
